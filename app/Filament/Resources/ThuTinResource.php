@@ -29,6 +29,7 @@ class ThuTinResource extends Resource implements HasShieldPermissions
     protected static ?string $navigationLabel = 'Thu tin';
     protected static ?string $modelLabel = 'Thu tin';
     protected static ?string $slug = 'thu-tin';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -294,7 +295,7 @@ class ThuTinResource extends Resource implements HasShieldPermissions
             ])
             ->actions([
                 Tables\Actions\Action::make('tasklist')
-                    ->label('Công việc')
+                    ->label('Case')
                     ->icon('heroicon-o-clipboard-document-list')
                     ->color(fn(ThuTin $record) => ($record->tasklist_count ?? $record->tasklists()->count()) > 0 ? 'success' : 'gray')
                     ->tooltip(function (ThuTin $record) {
@@ -304,7 +305,7 @@ class ThuTinResource extends Resource implements HasShieldPermissions
                     ->form(function () {
                         return [
                             Forms\Components\TagsInput::make('foreign_names')
-                                ->label('Danh khác công việc của người dùng khác')
+                                ->label('Danh khác case của người dùng khác')
                                 ->disabled()
                                 ->dehydrated(false)
                                 ->visible(function (\Filament\Forms\Get $get) {
@@ -313,7 +314,7 @@ class ThuTinResource extends Resource implements HasShieldPermissions
                                     return !$isAdmin && filled($get('foreign_names'));
                                 }),
                             Forms\Components\Select::make('tasklist_ids')
-                                ->label('Chọn công việc')
+                                ->label('Chọn case')
                                 ->multiple()
                                 ->searchable()
                                 ->preload()

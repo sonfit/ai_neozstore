@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\BookmarkResource\Pages;
 
 use App\Filament\Resources\BookmarkResource;
+use App\Services\FunctionHelp;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateBookmark extends CreateRecord
@@ -11,7 +12,7 @@ class CreateBookmark extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (!auth()->user()->hasAnyRole(['admin', 'super_admin'])) {
+        if (!FunctionHelp::isAdminUser()) {
             $data['user_id'] = auth()->id();
         }
         return $data;

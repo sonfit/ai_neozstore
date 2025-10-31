@@ -20,9 +20,10 @@ class TaskListResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationGroup = 'Tổng Hợp';
-    protected static ?string $navigationLabel = 'Công việc';
-    protected static ?string $modelLabel = 'Danh sách công việc';
-    protected static ?string $slug = 'danh-sach-cong-viec';
+    protected static ?string $navigationLabel = 'Case';
+    protected static ?string $modelLabel = 'Danh sách case';
+    protected static ?string $slug = 'danh-sach-case';
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {

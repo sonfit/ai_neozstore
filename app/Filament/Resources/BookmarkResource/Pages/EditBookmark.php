@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\BookmarkResource\Pages;
 
 use App\Filament\Resources\BookmarkResource;
+use App\Services\FunctionHelp;
 use Filament\Resources\Pages\EditRecord;
 
 class EditBookmark extends EditRecord
@@ -11,7 +12,7 @@ class EditBookmark extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        if (!auth()->user()->hasAnyRole(['admin', 'super_admin'])) {
+        if (!FunctionHelp::isAdminUser()) {
             // Prevent changing owner if not admin
             unset($data['user_id']);
         }

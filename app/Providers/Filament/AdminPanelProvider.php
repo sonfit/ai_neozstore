@@ -114,12 +114,6 @@ class AdminPanelProvider extends PanelProvider
                     ->setTitle('General Settings')
                     ->setNavigationLabel('General Settings'),
 
-//                BannerPlugin::make()
-//                    ->navigationIcon('heroicon-o-megaphone')
-//                    ->navigationLabel('Banners')
-//                    ->navigationGroup('Marketing')
-//                    ->navigationSort(1)
-
             ]);
 
     }

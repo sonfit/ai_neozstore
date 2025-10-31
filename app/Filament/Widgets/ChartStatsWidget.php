@@ -5,6 +5,8 @@ namespace App\Filament\Widgets;
 use App\Models\DangKy;
 use App\Models\ThuTin;
 use App\Models\TongHopTinhHinh;
+use App\Services\FunctionHelp;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 
@@ -15,12 +17,7 @@ class ChartStatsWidget extends ChartWidget
     protected int | string | array $columnSpan = 'full';
     protected static ?string $maxHeight = '400px';
 
-    public static function canView(): bool
-    {
-        $user = auth()->user();
-        // Cho phép xem nếu có quyền widget hoặc là admin/super_admin
-        return $user->can('widget_ChartStatsWidget') || $user->hasAnyRole(['admin', 'super_admin']);
-    }
+    use HasWidgetShield;
 
     protected function getData(): array
     {
@@ -29,7 +26,7 @@ class ChartStatsWidget extends ChartWidget
         $thuTinData = [];
 
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['admin', 'super_admin']);
+        $isAdmin = FunctionHelp::isAdminUser();
 
         for ($i = 29; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
@@ -43,7 +40,7 @@ class ChartStatsWidget extends ChartWidget
             // Thu thập tin - filter theo role
             $thuTinQuery = ThuTin::whereDate('created_at', $date);
 
-            if (!$isAdmin && $user->hasRole('user')) {
+            if (!$isAdmin && FunctionHelp::isUser()) {
                 // User chỉ xem tin của mục tiêu đã theo dõi
                 $mucTieuIds = $user->mucTieus()->pluck('muc_tieus.id')->toArray();
                 if (!empty($mucTieuIds)) {

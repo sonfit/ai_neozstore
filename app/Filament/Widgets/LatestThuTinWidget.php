@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\ThuTin;
 use App\Services\FunctionHelp;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -11,15 +12,10 @@ use Illuminate\Support\Str;
 
 class LatestThuTinWidget extends BaseWidget
 {
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
     protected int | string | array $columnSpan = 'full';
 
-    public static function canView(): bool
-    {
-
-        $user = auth()->user();
-        return $user->can('widget_LatestThuTinWidget') || $user->hasAnyRole(['admin', 'super_admin']);
-    }
+    use HasWidgetShield;
 
     public function table(Table $table): Table
     {
@@ -28,12 +24,12 @@ class LatestThuTinWidget extends BaseWidget
                 $user = auth()->user();
 
                 // Nếu user có quyền admin hoặc super_admin thì xem tất cả
-                if ($user->hasAnyRole(['admin', 'super_admin'])) {
+                if (FunctionHelp::isAdminUser()) {
                     return $query;
                 }
 
                 // Nếu user có quyền user thì chỉ xem tin thuộc mục tiêu mà user theo dõi
-                if ($user->hasRole('user')) {
+                if (FunctionHelp::isUser()) {
                     $mucTieuIds = $user->mucTieus()->pluck('muc_tieus.id')->toArray();
 
                     // Nếu user chưa theo dõi mục tiêu nào thì không hiển thị gì

@@ -25,6 +25,7 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
     protected static ?string $navigationLabel = 'Tổng hợp tình hình';
     protected static ?string $modelLabel = 'Tổng hợp tình hình';
     protected static ?string $slug = 'tong-hop-tinh-hinh';
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {
