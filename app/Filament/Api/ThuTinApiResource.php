@@ -288,12 +288,12 @@ class ThuTinApiResource
 
     public function upload(Request $request)
     {
-        Log::info('Received file upload request', [
-            'has_file' => $request->hasFile('file'),
-            'name'     => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : null,
-            'size'     => $request->hasFile('file') ? $request->file('file')->getSize() : null,
-            'mime'     => $request->hasFile('file') ? $request->file('file')->getMimeType() : null,
-        ]);
+//        Log::info('Received file upload request', [
+//            'has_file' => $request->hasFile('file'),
+//            'name'     => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : null,
+//            'size'     => $request->hasFile('file') ? $request->file('file')->getSize() : null,
+//            'mime'     => $request->hasFile('file') ? $request->file('file')->getMimeType() : null,
+//        ]);
 
         try {
             $request->validate([
@@ -315,11 +315,11 @@ class ThuTinApiResource
             $isVideo = str_starts_with($mime, 'video/');
 
             // (Tuỳ chọn) Nếu muốn siết chặt hơn:
-            // Ảnh ≤ 20MB, Video ≤ 500MB
-            if ($isImage && $file->getSize() > 20 * 1024 * 1024) {
+            // Ảnh ≤ 50MB, Video ≤ 500MB
+            if ($isImage && $file->getSize() > 50 * 1024 * 1024) {
                 return response()->json([
                     'status'  => 'error',
-                    'message' => 'Image exceeds 20MB limit'
+                    'message' => 'Image exceeds 50MB limit'
                 ], 422);
             }
             if (!$isImage && !$isVideo) {
@@ -342,12 +342,8 @@ class ThuTinApiResource
                         $img->orientate();
                     }
 
-                    // (Tuỳ chọn) resize nếu ảnh quá lớn để giảm RAM/CPU
-                    // if ($img->width() > 4000 || $img->height() > 4000) {
-                    //     $img->resize(4000, 4000, function ($c) { $c->aspectRatio(); $c->upsize(); });
-                    // }
 
-                    $encoded = $img->encode('webp', 80)->stream(); // stream() để nhận binary
+                    $encoded = $img->encode('webp', 100)->stream(); // stream() để nhận binary
                     $fileName = time() . '_' . uniqid('', true) . '.webp';
                     $path = $directory . '/' . $fileName;
 
