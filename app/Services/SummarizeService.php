@@ -85,6 +85,12 @@ class SummarizeService
         return implode("\n", $contentBlocks);
     }
 
+    protected function chunkArray(array $items, int $chunkSize): array
+    {
+        $chunkSize = max(1, $chunkSize);
+        return array_chunk($items, $chunkSize);
+    }
+
     protected function summarizeText(
         string $text,
         string $apiKey,
