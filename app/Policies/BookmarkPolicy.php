@@ -63,7 +63,7 @@ class BookmarkPolicy
      */
     public function forceDelete(User $user, Bookmark $bookmark): bool
     {
-        return $user->can('force_delete_bookmark');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class BookmarkPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_bookmark');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class BookmarkPolicy
      */
     public function restore(User $user, Bookmark $bookmark): bool
     {
-        return $user->can('restore_bookmark');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class BookmarkPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_bookmark');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class BookmarkPolicy
      */
     public function replicate(User $user, Bookmark $bookmark): bool
     {
-        return $user->can('replicate_bookmark');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class BookmarkPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_bookmark');
+        return $user->can('{{ Reorder }}');
     }
 }

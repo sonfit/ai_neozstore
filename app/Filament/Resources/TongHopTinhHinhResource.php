@@ -7,25 +7,27 @@ use App\Models\TongHopTinhHinh;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
-use Joaopaulolndev\FilamentGeneralSettings\Models\GeneralSetting;
-use OpenAI;
+use Illuminate\Support\Facades\App;
+use App\Services\SummarizeService;
 
 class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = TongHopTinhHinh::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Tổng Hợp';
     protected static ?string $navigationLabel = 'Tổng hợp tình hình';
     protected static ?string $modelLabel = 'Tổng hợp tình hình';
     protected static ?string $slug = 'tong-hop-tinh-hinh';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
+
 
     public static function form(Form $form): Form
     {
@@ -80,16 +82,25 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
                                     ->color('success')
                                     ->requiresConfirmation(false)
                                     ->action(function ($state, $set, $get) {
-                                        $content = $state;
-
-                                        if (empty($content)) {
-                                            static::sendErrorNotification('Nội dung bài viết trống.')->send();
+                                        $content = trim((string) $state);
+                                        if ($content === '') {
                                             return;
                                         }
 
-                                        $soKyTu = (int)$get('so_ky_tu') ?: 100;
-                                        $summary = static::generateSummary($content, $soKyTu);
-                                        $set('sumary', $summary);
+
+                                        /** @var SummarizeService $summarizer */
+                                        $summarizer = App::make(SummarizeService::class);
+
+                                        $maxChars = (int) $get('so_ky_tu') ?: 100;
+                                        $pics = $get('pic') ?: [];
+                                        $item = [
+                                            'contents_text' => $content,
+                                            'pic' => $pics,
+                                        ];
+                                        $summary = $summarizer->summarizeCaseFromItems([$item], $maxChars, null);
+                                        if ($summary) {
+                                            $set('sumary', $summary);
+                                        }
                                     })
                             )
                             ->columnSpan(4),
@@ -147,7 +158,7 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
                     ->url(fn($record) => $record->link, true) // click được, mở tab mới
                     ->limit(50) // cắt ngắn link cho gọn
                     ->wrap()
-                    ->description(fn($record) => $record->sumary ?? '') // tóm tắt hiển thị dưới
+                    ->description(fn($record) => $record->sumary ? $record->sumary : $record->contents_text) // tóm tắt hiển thị dưới
                     ->sortable()
                     ->searchable(['link', 'contents_text', 'sumary']),
 
@@ -158,19 +169,31 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
                     ->color('primary')
                     ->wrap(),
 
-                // Hình ảnh (thumbnail)
                 Tables\Columns\ImageColumn::make('pic')
                     ->label('Hình ảnh')
                     ->disk('public')
-                    ->height(80)
-                    ->width(120)
+                    ->circular()
+                    ->stacked()
+                    ->limit(3)
+                    ->limitedRemainingText()
+                    ->getStateUsing(function ($record) {
+                        return collect($record->pic)->map(function ($p) {
+                            $url = Storage::disk('public')->url($p);
+                            $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
+
+                            if (in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'avi'])) {
+                                // Nếu là video -> dùng ảnh placeholder
+                                return asset('video-placeholder.jpg');
+                            }
+                            return $url;
+                        })->toArray();
+                    })
                     ->action(
                         Tables\Actions\Action::make('Xem ảnh')
-                            ->modalHeading('Xem ảnh')
-                            ->modalContent(fn($record) => view('filament.modals.preview-image', [
-                                'url' => Storage::disk('public')->url($record->pic)
-                            ])
-                            )
+                            ->modalHeading('Xem media')
+                            ->modalContent(fn($record) => view('filament.modals.preview-media', [
+                                'urls' => collect($record->pic)->map(fn($p) => Storage::disk('public')->url($p))->toArray()
+                            ]))
                             ->modalSubmitAction(false)
                     ),
 
@@ -219,6 +242,11 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
         ];
     }
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function getPages(): array
     {
         return [
@@ -227,86 +255,6 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
             'view' => Pages\ViewTongHopTinhHinh::route('/{record}'),
             'edit' => Pages\EditTongHopTinhHinh::route('/{record}/edit'),
         ];
-    }
-
-    public static function sendErrorNotification(string $message): Notification
-    {
-        return Notification::make()
-            ->title('Thất bại')
-            ->danger()
-            ->body($message)
-            ->send();
-    }
-
-    public static function sendSuccessNotification(string $message): Notification
-    {
-        return Notification::make()
-            ->title('Thành công')
-            ->success()
-            ->body($message)
-            ->send();
-    }
-
-    public static function generateSummary($content, $soKyTu): string
-    {
-        // Get API config
-        $apiConfig = static::getApiConfiguration();
-
-        if (!$apiConfig['valid']) {
-            static::sendErrorNotification($apiConfig['message']);
-        }
-        // Build AI prompt
-        $messages = static::buildAIPrompt($content, $apiConfig['promptContent'], $soKyTu);
-
-        try {
-            $client = OpenAI::client($apiConfig['key']);
-            $response = $client->chat()->create([
-                'model' => $apiConfig['model'],
-                'messages' => $messages,
-                'temperature' => (int)$apiConfig['temperature'],
-                'max_tokens' => (int)$apiConfig['max_tokens'],
-            ]);
-
-            $summary = $response->choices[0]->message->content ?? 'Không thể tóm tắt nội dung.';
-        } catch (\Exception $e) {
-            return 'Lỗi trong quá trình tóm tắt: ' . $e->getMessage();
-        }
-        // Thông báo thành công
-        static::sendSuccessNotification('Tóm tắt nội dung thành công!');
-        return $summary;
-
-    }
-
-    public static function getApiConfiguration(): array
-    {
-        $settings = GeneralSetting::first();
-
-        return [
-            'key' => $settings->more_configs['key_api'] ?? null,
-            'model' => $settings->more_configs['model_api'] ?? 'gpt-3.5-turbo',
-            'temperature' => $settings->more_configs['temperature_api'] ?? '0.5',
-            'max_tokens' => $settings->more_configs['max_tokens_api'] ?? '300',
-            'promptContent' => $settings->more_configs[$settings->more_configs['select_prompt'] ?? 'prompt_1'] ?? '',
-            'valid' => !empty($settings->more_configs['key_api']),
-            'message' => empty($settings) ? 'Cấu hình hệ thống không tồn tại' : 'Cấu hình API không hợp lệ'
-        ];
-    }
-
-    public static function buildAIPrompt(?string $content, string $prompt, int $soKyTu): array
-    {
-        $prompt = str_replace('{so_ky_tu}', $soKyTu, $prompt);
-        $messages = [
-            [
-                'role' => 'system',
-                'content' => $prompt
-            ],
-            [
-                'role' => 'user',
-                'content' => $content
-            ],
-        ];
-
-        return $messages;
     }
 
     public static function getPermissionPrefixes(): array
@@ -320,6 +268,4 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
             'delete_any',
         ];
     }
-
-
 }

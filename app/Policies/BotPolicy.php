@@ -63,7 +63,7 @@ class BotPolicy
      */
     public function forceDelete(User $user, Bot $bot): bool
     {
-        return $user->can('force_delete_bot');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class BotPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_bot');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class BotPolicy
      */
     public function restore(User $user, Bot $bot): bool
     {
-        return $user->can('restore_bot');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class BotPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_bot');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class BotPolicy
      */
     public function replicate(User $user, Bot $bot): bool
     {
-        return $user->can('replicate_bot');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class BotPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_bot');
+        return $user->can('{{ Reorder }}');
     }
 }

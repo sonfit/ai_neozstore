@@ -5,6 +5,7 @@ namespace App\Filament\Resources\TaskListResource\RelationManagers;
 use App\Filament\Resources\ThuTinResource;
 use App\Services\FunctionHelp;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,6 +17,9 @@ class ThuTinsRelationManager extends RelationManager
     protected static string $relationship = 'thuTins';
 
     protected static ?string $title = 'Thu tin';
+
+
+
 
     public function form(\Filament\Forms\Form $form): \Filament\Forms\Form
     {
@@ -157,6 +161,7 @@ class ThuTinsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\AttachAction::make()
                     ->preloadRecordSelect()
+                    ->multiple()
                     ->recordSelectSearchColumns(['link', 'contents_text'])
                     ->recordTitleAttribute('link'),
             ])

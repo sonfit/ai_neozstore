@@ -63,7 +63,7 @@ class MucTieuPolicy
      */
     public function forceDelete(User $user, MucTieu $mucTieu): bool
     {
-        return $user->can('force_delete_muc::tieu');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class MucTieuPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_muc::tieu');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class MucTieuPolicy
      */
     public function restore(User $user, MucTieu $mucTieu): bool
     {
-        return $user->can('restore_muc::tieu');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class MucTieuPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_muc::tieu');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class MucTieuPolicy
      */
     public function replicate(User $user, MucTieu $mucTieu): bool
     {
-        return $user->can('replicate_muc::tieu');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class MucTieuPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_muc::tieu');
+        return $user->can('{{ Reorder }}');
     }
 }

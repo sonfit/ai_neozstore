@@ -15,7 +15,7 @@ class TaskListPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_task::list');
+        return $user->can('view_any_tong::hop::case');
     }
 
     /**
@@ -23,7 +23,7 @@ class TaskListPolicy
      */
     public function view(User $user, TaskList $taskList): bool
     {
-        return $user->can('view_task::list');
+        return $user->can('view_tong::hop::case');
     }
 
     /**
@@ -31,7 +31,7 @@ class TaskListPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_task::list');
+        return $user->can('create_tong::hop::case');
     }
 
     /**
@@ -39,7 +39,7 @@ class TaskListPolicy
      */
     public function update(User $user, TaskList $taskList): bool
     {
-        return $user->can('update_task::list');
+        return $user->can('update_tong::hop::case');
     }
 
     /**
@@ -47,7 +47,7 @@ class TaskListPolicy
      */
     public function delete(User $user, TaskList $taskList): bool
     {
-        return $user->can('delete_task::list');
+        return $user->can('delete_tong::hop::case');
     }
 
     /**
@@ -55,7 +55,7 @@ class TaskListPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_task::list');
+        return $user->can('delete_any_tong::hop::case');
     }
 
     /**

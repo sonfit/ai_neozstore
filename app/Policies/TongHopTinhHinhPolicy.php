@@ -63,7 +63,7 @@ class TongHopTinhHinhPolicy
      */
     public function forceDelete(User $user, TongHopTinhHinh $tongHopTinhHinh): bool
     {
-        return $user->can('force_delete_tong::hop::tinh::hinh');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class TongHopTinhHinhPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_tong::hop::tinh::hinh');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class TongHopTinhHinhPolicy
      */
     public function restore(User $user, TongHopTinhHinh $tongHopTinhHinh): bool
     {
-        return $user->can('restore_tong::hop::tinh::hinh');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class TongHopTinhHinhPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_tong::hop::tinh::hinh');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class TongHopTinhHinhPolicy
      */
     public function replicate(User $user, TongHopTinhHinh $tongHopTinhHinh): bool
     {
-        return $user->can('replicate_tong::hop::tinh::hinh');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class TongHopTinhHinhPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_tong::hop::tinh::hinh');
+        return $user->can('{{ Reorder }}');
     }
 }

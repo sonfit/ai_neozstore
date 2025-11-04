@@ -1,28 +1,35 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Filament\Resources\TaskListResource\RelationManagers;
 
-use App\Models\ThuTin;
+use App\Filament\Resources\TongHopTinhHinhResource;
 use App\Services\FunctionHelp;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class LatestThuTinWidget extends BaseWidget
+class TongHopTinhHinhsRelationManager extends RelationManager
 {
-    protected static ?int $sort = 3;
-    protected int | string | array $columnSpan = 'full';
+    protected static string $relationship = 'tongHopTinhHinhs';
 
-    use HasWidgetShield;
+    protected static ?string $title = 'Tổng hợp tình hình';
+
+    public function form(\Filament\Forms\Form $form): \Filament\Forms\Form
+    {
+        return $form
+            ->schema([
+                // no create form; we only attach existing TongHopTinhHinh here
+            ]);
+    }
 
     public function table(Table $table): Table
     {
         return $table
             ->modifyQueryUsing(function ($query) {
                 $user = auth()->user();
+                $query->with(['taskLists.user'])->withCount('taskLists');
 
                 // Nếu user có quyền admin hoặc super_admin thì xem tất cả
                 if (FunctionHelp::isAdminUser()) {
@@ -43,25 +50,22 @@ class LatestThuTinWidget extends BaseWidget
 
                 return $query;
             })
-            ->query(
-                ThuTin::query()
-                    ->with(['mucTieu', 'bot'])
-                    ->latest('created_at')
-                    ->limit(5)
-            )
             ->columns([
-                Tables\Columns\TextColumn::make('bot.ten_bot')
-                    ->label('Tên Bot')
-                    ->description(fn($record) => $record->bot->loai_bot ?? null),
-
                 Tables\Columns\TextColumn::make('link')
-                    ->label('Link')
+                    ->label('Link bài viết')
                     ->url(fn($record) => $record->link, true)
                     ->limit(50)
-                    ->description(fn($record) => $record->contents_text ? Str::limit($record->contents_text, 50) : '')
-                    ->tooltip(fn($record) => $record->contents_text ?? '')
                     ->wrap()
-                    ->searchable(),
+                    ->description(fn($record) => $record->contents_text ? Str::limit($record->contents_text, 100) : '')
+                    ->tooltip(fn($record) => $record->contents_text ?? '')
+                    ->sortable()
+                    ->searchable(['link', 'contents_text']),
+
+                Tables\Columns\TextColumn::make('muctieu.name')
+                    ->label('Mục tiêu')
+                    ->url(fn($record) => $record->muctieu?->link, true)
+                    ->color('primary')
+                    ->wrap(),
 
                 Tables\Columns\ImageColumn::make('pic')
                     ->label('Hình ảnh')
@@ -71,6 +75,9 @@ class LatestThuTinWidget extends BaseWidget
                     ->limit(3)
                     ->limitedRemainingText()
                     ->getStateUsing(function ($record) {
+                        if (!$record->pic || !is_array($record->pic)) {
+                            return [];
+                        }
                         return collect($record->pic)->map(function ($p) {
                             $url = Storage::disk('public')->url($p);
                             $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
@@ -86,27 +93,20 @@ class LatestThuTinWidget extends BaseWidget
                         Tables\Actions\Action::make('Xem ảnh')
                             ->modalHeading('Xem media')
                             ->modalContent(fn($record) => view('filament.modals.preview-media', [
-                                'urls' => collect($record->pic)->map(fn($p) => Storage::disk('public')->url($p))->toArray()
+                                'urls' => $record->pic ? collect($record->pic)->map(fn($p) => Storage::disk('public')->url($p))->toArray() : []
                             ]))
                             ->modalSubmitAction(false)
                     ),
 
-                Tables\Columns\TextColumn::make('mucTieu.name')
-                    ->label('Mục tiêu')
-                    ->badge()
-                    ->limit(15)
-                    ->tooltip(fn($record) => $record->mucTieu->name ?? '')
-                    ->color('info'),
-
                 Tables\Columns\TextColumn::make('phanloai')
                     ->label('Phân loại')
-                    ->badge()
                     ->formatStateUsing(
-                        fn ($state) => trans("options.phanloai.$state") !== "options.phanloai.$state"
+                        fn($state) => trans("options.phanloai.$state") !== "options.phanloai.$state"
                             ? trans("options.phanloai.$state")
                             : 'Chưa xác định'
                     )
-                    ->color(fn($state) => match($state) {
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
                         1, 2 => 'danger',
                         3, 4 => 'warning',
                         5 => 'info',
@@ -123,15 +123,34 @@ class LatestThuTinWidget extends BaseWidget
                     ->color(function ($state) {
                         $level = FunctionHelp::diemToLevel($state);
                         return FunctionHelp::levelBadgeColor($level);
-                    }),
+                    })
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('time')
                     ->label('Thời gian')
-                    ->dateTime('d/m/Y H:i'),
+                    ->dateTime('H:i:s d/m/Y')
+                    ->sortable(),
             ])
-            ->heading('Tin tức mới nhất')
-            ->description('5 tin tức được thu thập gần đây nhất')
-            ->paginated(false);
+            ->headerActions([
+                Tables\Actions\AttachAction::make()
+                    ->preloadRecordSelect()
+                    ->multiple()
+                    ->recordSelectSearchColumns(['link', 'contents_text'])
+                    ->recordTitleAttribute('link'),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('edit')
+                    ->label('Chỉnh sửa')
+                    ->icon('heroicon-o-pencil-square')
+                    ->url(fn($record) => TongHopTinhHinhResource::getUrl('edit', ['record' => $record]))
+                    ->openUrlInNewTab(),
+                Tables\Actions\DetachAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DetachBulkAction::make(),
+                ]),
+            ]);
     }
 }
 

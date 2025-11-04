@@ -12,6 +12,8 @@ class TaskList extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'sumary',
+        'status',
     ];
 
     public function user()
@@ -22,5 +24,10 @@ class TaskList extends Model
     public function thuTins()
     {
         return $this->belongsToMany(ThuTin::class, 'task_list_thu_tin')->withTimestamps();
+    }
+
+    public function tongHopTinhHinhs()
+    {
+        return $this->belongsToMany(TongHopTinhHinh::class, 'task_list_tong_hop_tinh_hinh')->withTimestamps();
     }
 }

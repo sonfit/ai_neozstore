@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
@@ -65,13 +66,6 @@ class ThuTinResource extends Resource implements HasShieldPermissions
                     }),
 
 
-                Forms\Components\Radio::make('phanloai')
-                    ->label('Phân loại tin tức')
-                    ->options(__('options.phanloai'))
-                    ->default(1)
-                    ->required()
-                    ->columns(2)
-                    ->extraAttributes(['style' => 'margin-left: 50px;']),
 
                 Forms\Components\TextInput::make('diem')
                     ->label('Điểm')
@@ -81,13 +75,73 @@ class ThuTinResource extends Resource implements HasShieldPermissions
                         - điểm ≥ 70 → level 4<br>
                         - điểm ≥ 40 → level 3<br>
                         - điểm ≥ 20 → level 2<br>
-                        - điểm < 20 → level 1
+                        - điểm < 20 → level 1<br>
+                        <em>Điểm sẽ tự động cộng thêm từ tags</em>
                     '))
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
-                    ->required(),
+                    ->required()
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        // Khi người dùng thay đổi điểm trực tiếp, tính lại điểm cơ sở
+                        // bằng cách trừ đi tổng điểm tags hiện tại
+                        $tagIds = $get('tags') ?? [];
+                        $tongDiemTags = 0;
+                        if (!empty($tagIds)) {
+                            $tongDiemTags = \App\Models\Tag::whereIn('id', $tagIds)
+                                ->sum('diem');
+                        }
+                        $diemCoSo = max(0, ($state ?? 0) - $tongDiemTags);
+                        $set('diem_co_so', $diemCoSo);
+                    }),
 
+
+                Forms\Components\Hidden::make('diem_co_so')
+                    ->default(function ($record) {
+                        if ($record) {
+                            // Lấy điểm hiện tại và trừ đi tổng điểm tags hiện tại
+                            $tongDiemTagsHienTai = $record->tags()->sum('diem');
+                            return max(0, ($record->diem ?? 0) - $tongDiemTagsHienTai);
+                        }
+                        return 0;
+                    })
+                    ->dehydrated(false),
+
+
+                Forms\Components\Select::make('tags')
+                    ->label('Tags')
+                    ->relationship('tags', 'tag')
+                    ->saveRelationshipsUsing(function (Model $record, $state) {
+                        $record->tags()->sync($state);
+                    })
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        // Tính tổng điểm từ tags đã chọn
+                        $tagIds = is_array($state) ? $state : [];
+                        $tongDiemTags = 0;
+                        if (!empty($tagIds)) {
+                            $tongDiemTags = \App\Models\Tag::whereIn('id', $tagIds)
+                                ->sum('diem');
+                        }
+
+                        // Lấy điểm cơ sở (điểm không tính tags)
+                        $diemCoSo = $get('diem_co_so') ?? 0;
+
+                        // Cập nhật điểm trong form = điểm cơ sở + tổng điểm tags
+                        $set('diem', $diemCoSo + $tongDiemTags);
+                    })
+                    ->multiple()
+                    ->preload()
+                    ->searchable(),
+
+
+
+                Forms\Components\Radio::make('phanloai')
+                    ->label('Phân loại tin tức')
+                    ->options(__('options.phanloai'))
+                    ->default(1)
+                    ->required()
+                    ->columns(2)
+                    ->extraAttributes(['style' => 'margin-left: 50px;']),
                 Forms\Components\Textarea::make('contents_text')
                     ->label('Nội dung bài viết')
                     ->rows(10),
