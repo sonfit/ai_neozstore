@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\App;
 use App\Services\SummarizeService;
+use Illuminate\Support\Str;
 
 class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
 {
@@ -155,10 +156,13 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
                 // Nội dung tóm tắt
                 Tables\Columns\TextColumn::make('link')
                     ->label('Link bài viết')
-                    ->url(fn($record) => $record->link, true) // click được, mở tab mới
-                    ->limit(50) // cắt ngắn link cho gọn
+                    ->url(fn($record) => $record->link, true)
+                    ->limit(50)
                     ->wrap()
-                    ->description(fn($record) => $record->sumary ? $record->sumary : $record->contents_text) // tóm tắt hiển thị dưới
+                    ->description(fn($record) => Str::limit(
+                        $record->sumary ?: $record->contents_text,
+                        100 // 👈 giới hạn 100 ký tự
+                    ))
                     ->sortable()
                     ->searchable(['link', 'contents_text', 'sumary']),
 
