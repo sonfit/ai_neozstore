@@ -10,8 +10,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\App;
@@ -28,6 +26,7 @@ class TongHopTinhHinhResource extends Resource implements HasShieldPermissions
     protected static ?string $modelLabel = 'Tổng hợp tình hình';
     protected static ?string $slug = 'tong-hop-tinh-hinh';
     protected static ?int $navigationSort = 5;
+    protected static bool $shouldRegisterNavigation = false;
 
 
     public static function form(Form $form): Form
