@@ -35,9 +35,7 @@ class CaseReportService
         if ($cases->isEmpty()) {
             return 'Không có dữ liệu để tạo báo cáo.';
         }
-
         $report = $this->formatReport($cases, $fromDate, $toDate);
-
         return $report;
     }
 
@@ -52,7 +50,7 @@ class CaseReportService
     protected function formatReport($cases, ?Carbon $fromDate = null, ?Carbon $toDate = null): string
     {
         $lines = [];
-        
+
         // Header
         $lines[] = 'BÁO CÁO TỔNG HỢP CASE';
         $lines[] = '=' . str_repeat('=', 50);
@@ -81,14 +79,14 @@ class CaseReportService
             $lines[] = "Người tạo: " . ($case->user->name ?? 'N/A');
             $lines[] = "Ngày tạo: " . $case->created_at->format('d/m/Y H:i');
             $lines[] = '';
-            
+
             if ($case->sumary) {
                 $lines[] = 'Tóm tắt:';
                 $lines[] = $case->sumary;
             } else {
                 $lines[] = 'Tóm tắt: (Chưa có tóm tắt)';
             }
-            
+
             $lines[] = '';
         }
 
@@ -129,7 +127,7 @@ class CaseReportService
 
         $html = '<html><head><meta charset="UTF-8"></head><body>';
         $html .= '<h1 style="text-align: center;">BÁO CÁO TỔNG HỢP CASE</h1>';
-        
+
         if ($fromDate || $toDate) {
             $html .= '<p><strong>Thời gian báo cáo:</strong> ';
             if ($fromDate && $toDate) {
@@ -149,14 +147,14 @@ class CaseReportService
             $html .= '<h2>Case #' . ($index + 1) . ': ' . htmlspecialchars($case->name) . '</h2>';
             $html .= '<p><strong>Người tạo:</strong> ' . htmlspecialchars($case->user->name ?? 'N/A') . '</p>';
             $html .= '<p><strong>Ngày tạo:</strong> ' . $case->created_at->format('d/m/Y H:i') . '</p>';
-            
+
             if ($case->sumary) {
                 $html .= '<p><strong>Tóm tắt:</strong></p>';
                 $html .= '<p style="text-align: justify; white-space: pre-wrap;">' . nl2br(htmlspecialchars($case->sumary)) . '</p>';
             } else {
                 $html .= '<p><strong>Tóm tắt:</strong> (Chưa có tóm tắt)</p>';
             }
-            
+
             $html .= '<hr>';
         }
 
