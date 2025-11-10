@@ -29,7 +29,6 @@ class CaseReportService
         if ($toDate) {
             $query->where('created_at', '<=', $toDate->endOfDay());
         }
-
         $cases = $query->get();
 
         if ($cases->isEmpty()) {
